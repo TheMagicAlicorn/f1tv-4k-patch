@@ -333,6 +333,210 @@ else
     fi
 fi
 
+# ─── Patch Quirks for MT5896 (Philips/MediaTek) 4K@60fps cap ──────────────
+info "Applying MT5896 decoder framerate cap quirk..."
+
+QUIRKS1="$(find "${DECOMPILED}" -name 'Quirks$1.smali' -print -quit)"
+QUIRKS_DIR="$(dirname "${QUIRKS1}")"
+
+if [[ -n "${QUIRKS1}" ]]; then
+    # Inject Quirks$1$10$1.smali (VideoDecoderLimit list)
+    cat > "${QUIRKS_DIR}/Quirks\$1\$10\$1.smali" << 'SMALI'
+.class Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10$1;
+.super Ljava/util/ArrayList;
+.source "SourceFile"
+
+.annotation system Ldalvik/annotation/EnclosingClass;
+    value = Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;
+.end annotation
+
+.annotation system Ldalvik/annotation/InnerClass;
+    accessFlags = 0x1
+    name = null
+.end annotation
+
+.annotation system Ldalvik/annotation/Signature;
+    value = {
+        "Ljava/util/ArrayList<",
+        "Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;",
+        ">;"
+    }
+.end annotation
+
+.field final synthetic this$1:Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;
+
+.method public constructor <init>(Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;)V
+    .locals 4
+
+    iput-object p1, p0, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10$1;->this$1:Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;
+
+    invoke-direct {p0}, Ljava/util/ArrayList;-><init>()V
+
+    const-wide/high16 v2, 0x404e000000000000L    # 60.0
+
+    # 640x480 @ 60fps
+    new-instance p1, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;
+    const/16 v0, 0x280
+    const/16 v1, 0x1e0
+    invoke-direct {p1, v0, v1, v2, v3}, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;-><init>(IID)V
+    invoke-virtual {p0, p1}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+    # 1280x720 @ 60fps
+    new-instance p1, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;
+    const/16 v0, 0x500
+    const/16 v1, 0x2d0
+    invoke-direct {p1, v0, v1, v2, v3}, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;-><init>(IID)V
+    invoke-virtual {p0, p1}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+    # 1920x1080 @ 60fps
+    new-instance p1, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;
+    const/16 v0, 0x780
+    const/16 v1, 0x438
+    invoke-direct {p1, v0, v1, v2, v3}, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;-><init>(IID)V
+    invoke-virtual {p0, p1}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+    # 3840x2160 @ 60fps (4K cap)
+    new-instance p1, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;
+    const/16 v0, 0xf00
+    const/16 v1, 0x870
+    invoke-direct {p1, v0, v1, v2, v3}, Lcom/tiledmedia/clearvrdecoder/util/VideoDecoderLimit;-><init>(IID)V
+    invoke-virtual {p0, p1}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+    return-void
+.end method
+SMALI
+
+    # Inject Quirks$1$10.smali (DecoderCapability list)
+    cat > "${QUIRKS_DIR}/Quirks\$1\$10.smali" << 'SMALI'
+.class Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;
+.super Ljava/util/ArrayList;
+.source "SourceFile"
+
+.annotation system Ldalvik/annotation/EnclosingClass;
+    value = Lcom/tiledmedia/clearvrdecoder/util/Quirks$1;
+.end annotation
+
+.annotation system Ldalvik/annotation/InnerClass;
+    accessFlags = 0x1
+    name = null
+.end annotation
+
+.annotation system Ldalvik/annotation/Signature;
+    value = {
+        "Ljava/util/ArrayList<",
+        "Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;",
+        ">;"
+    }
+.end annotation
+
+.field final synthetic this$0:Lcom/tiledmedia/clearvrdecoder/util/Quirks$1;
+
+.method public constructor <init>(Lcom/tiledmedia/clearvrdecoder/util/Quirks$1;)V
+    .locals 9
+
+    iput-object p1, p0, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;->this$0:Lcom/tiledmedia/clearvrdecoder/util/Quirks$1;
+
+    invoke-direct {p0}, Ljava/util/ArrayList;-><init>()V
+
+    # Non-secure HEVC
+    new-instance v0, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;
+    const-class p1, Lcom/tiledmedia/clearvrdecoder/util/MediaCodecCapabilities$DecoderFlags;
+    invoke-static {p1}, Ljava/util/EnumSet;->noneOf(Ljava/lang/Class;)Ljava/util/EnumSet;
+    move-result-object v4
+    new-instance v8, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10$1;
+    invoke-direct {v8, p0}, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10$1;-><init>(Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;)V
+    const/4 v6, 0x0
+    const/4 v7, 0x0
+    const-string v1, "video/hevc"
+    const-string v2, ""
+    const-string v3, ""
+    const/4 v5, 0x0
+    invoke-direct/range {v0 .. v8}, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/EnumSet;IIILjava/util/ArrayList;)V
+    invoke-virtual {p0, v0}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+    # Secure HEVC
+    new-instance v0, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;
+    const-class p1, Lcom/tiledmedia/clearvrdecoder/util/MediaCodecCapabilities$DecoderFlags;
+    invoke-static {p1}, Ljava/util/EnumSet;->noneOf(Ljava/lang/Class;)Ljava/util/EnumSet;
+    move-result-object v4
+    sget-object v5, Lcom/tiledmedia/clearvrdecoder/util/MediaCodecCapabilities$DecoderFlags;->FLAG_SECURE:Lcom/tiledmedia/clearvrdecoder/util/MediaCodecCapabilities$DecoderFlags;
+    invoke-virtual {v4, v5}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+    new-instance v8, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10$1;
+    invoke-direct {v8, p0}, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10$1;-><init>(Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;)V
+    const/4 v6, 0x0
+    const/4 v7, 0x0
+    const-string v1, "video/hevc"
+    const-string v2, ""
+    const-string v3, ""
+    const/4 v5, 0x0
+    invoke-direct/range {v0 .. v8}, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/EnumSet;IIILjava/util/ArrayList;)V
+    invoke-virtual {p0, v0}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+    return-void
+.end method
+SMALI
+
+    # Patch Quirks$1.smali to add mt5896 entry using Build.HARDWARE directly
+    python3 - "${QUIRKS1}" << 'PYEOF'
+import sys
+
+path = sys.argv[1]
+with open(path, 'r') as f:
+    content = f.read()
+
+if 'mt5896' in content:
+    print("MT5896 quirk already present, skipping")
+    sys.exit(0)
+
+insertion = """
+    .line 300
+    new-instance v0, Lcom/tiledmedia/clearvrdecoder/util/DeviceCapabilitiesInternal;
+
+    const-string v1, "mt5896"
+
+    filled-new-array {v1}, [Ljava/lang/String;
+
+    move-result-object v3
+
+    .line 301
+    sget-object v4, Landroid/os/Build;->HARDWARE:Ljava/lang/String;
+
+    const-string v5, "mt5896"
+
+    invoke-virtual {v4, v5}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
+
+    move-result v4
+
+    new-instance v5, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;
+
+    invoke-direct {v5, p0}, Lcom/tiledmedia/clearvrdecoder/util/Quirks$1$10;-><init>(Lcom/tiledmedia/clearvrdecoder/util/Quirks$1;)V
+
+    const-string v1, "mt5896"
+
+    const-string v2, "Limit HEVC decoder to 4K@60fps to prevent secure memory exhaustion"
+
+    invoke-direct/range {v0 .. v5}, Lcom/tiledmedia/clearvrdecoder/util/DeviceCapabilitiesInternal;-><init>(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;ZLjava/util/ArrayList;)V
+
+    .line 302
+    invoke-virtual {p0, v0}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z
+
+"""
+
+content = content.replace('    return-void\n.end method', insertion + '    return-void\n.end method', 1)
+
+with open(path, 'w') as f:
+    f.write(content)
+print("MT5896 quirk injected into Quirks$1.smali")
+PYEOF
+
+    # Remove stale Quirks0.smali if apktool regenerated it
+    find "${QUIRKS_DIR}" -name 'Quirks0.smali' -delete 2>/dev/null || true
+
+    ok "MT5896 decoder cap quirk applied"
+else
+    warn "Quirks\$1.smali not found, skipping MT5896 quirk"
+fi
+
 # ─── Rebuild with apktool ────────────────────────────────────────────────────
 
 REBUILT="${WORKDIR}/rebuilt"
