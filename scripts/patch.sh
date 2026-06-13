@@ -522,7 +522,11 @@ insertion = """
 
 """
 
-content = content.replace('    return-void\n.end method', insertion + '    return-void\n.end method', 1)
+content = content.replace(
+    '    invoke-virtual {p0, v2}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z\n\n    return-void\n.end method',
+    '    invoke-virtual {p0, v2}, Ljava/util/AbstractCollection;->add(Ljava/lang/Object;)Z\n' + insertion + '\n    return-void\n.end method',
+    1
+)
 
 with open(path, 'w') as f:
     f.write(content)
